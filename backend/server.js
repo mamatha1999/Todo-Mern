@@ -8,13 +8,7 @@ import path from "path";
 //Dotenv cofig should be at the top of the file before using any environment variables
 dotenv.config();
 
-const PATH = process.env.PORT || 5000;
-
 const app = express();
-
-app.use(express.json());
-
-app.use("/api/todos", todoRoutes);
 
 const __dirname = path.resolve();
 
@@ -24,6 +18,12 @@ if (process.env.NODE_ENV === "production") {
     res.sendFile(path.join(__dirname, "frontend", "dist", "index.html"));
   });
 }
+
+const PATH = process.env.PORT || 5000;
+
+app.use(express.json());
+
+app.use("/api/todos", todoRoutes);
 
 app.listen(PORT, () => {
   connectDB();

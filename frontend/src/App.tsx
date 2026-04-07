@@ -113,15 +113,18 @@ const App = () => {
   return (
     <div
       id="TodoAppContainer"
-      className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4"
+      className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 flex items-center justify-center p-4"
     >
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-8">
-        <h1 className="text-4xl font-bold text-gray-800 mb-8 text-center">
-          Task Manager
-        </h1>
+      <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/70 w-full max-w-2xl p-8">
+        <div className="mb-8 text-center">
+          <h1 className="text-4xl font-extrabold text-gray-800">Task Manager</h1>
+          <p className="text-sm text-gray-500 mt-2">
+            {todoItems.length} total • {todoItems.filter((item) => item.completed).length} completed
+          </p>
+        </div>
         <form
           onSubmit={addTodo}
-          className="flex items-center gap-2 shadow-sm border border-gray-200 p-1 rounded-lg"
+          className="flex items-center gap-2 shadow-sm border border-gray-200 p-1.5 rounded-xl bg-white"
         >
           <input
             type="text"
@@ -135,24 +138,33 @@ const App = () => {
             }}
             name="text"
             placeholder="Enter a new task"
-            className="flex-1 outline-none px-3 py-2 text-gray-700 placeholder-gray-400"
+            className="flex-1 outline-none px-3 py-2.5 text-gray-700 placeholder-gray-400 bg-transparent"
             required
           />
           <button
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md font-medium cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-semibold cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
             type="submit"
             disabled={isAdding}
           >
             {isAdding ? "Adding..." : "Add Task"}
           </button>
         </form>
-        <div className="mt-4">
+        <div className="mt-5">
           {todoItems?.length === 0 ? (
-            <div className="text-gray-300">No tasks found</div>
+            <div className="text-center text-gray-400 border border-dashed border-gray-300 rounded-2xl py-10 bg-gray-50">
+              No tasks found
+            </div>
           ) : (
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3">
               {todoItems?.map((item) => (
-                <div key={item?._id}>
+                <div
+                  key={item?._id}
+                  className={`rounded-2xl border px-4 py-3 transition-all ${
+                    item.completed
+                      ? "border-green-200 bg-green-50/60"
+                      : "border-gray-200 bg-white hover:shadow-md"
+                  }`}
+                >
                   {editingTodo === item?._id ? (
                     <div className="flex items-center gap-x-3">
                       <input
@@ -165,7 +177,7 @@ const App = () => {
                       <div className="flex gap-x-2">
                         <button
                           type="button"
-                          className="px-4 py-2 text-white rounded-lg hover:bg-green-600 bg-green-500 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                          className="px-4 py-2 text-white rounded-lg hover:bg-green-600 bg-green-500 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                           onClick={() => saveEdit(item?._id)}
                           disabled={savingTodoId === item?._id}
                         >
@@ -173,7 +185,7 @@ const App = () => {
                         </button>
                         <button
                           type="button"
-                          className="px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-300 bg-gray-200 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                          className="px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-300 bg-gray-200 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                           onClick={() => setEditingTodo(null)}
                           disabled={savingTodoId === item?._id}
                         >
@@ -187,13 +199,23 @@ const App = () => {
                         <div className="flex gap-x-4 overflow-hidden">
                           <button
                             type="button"
-                            className={`flex-shrink-0 h-6 w-6 border rounded-full flex items-center justify-center disabled:opacity-60 disabled:cursor-not-allowed ${item?.completed ? "bg-green-500 border-green-500" : "border-gray-300 hover:border-blue-500 cursor-pointer"}`}
+                            className={`flex-shrink-0 h-6 w-6 border rounded-full flex items-center justify-center disabled:opacity-60 disabled:cursor-not-allowed transition-colors ${
+                              item?.completed
+                                ? "bg-green-500 border-green-500 text-white"
+                                : "border-gray-300 hover:border-blue-500 cursor-pointer"
+                            }`}
                             onClick={() => toggleTodo(item?._id)}
                             disabled={togglingTodoId === item?._id}
                           >
                             {togglingTodoId === item?._id ? "..." : item?.completed && <MdOutlineDone />}
                           </button>
-                          <span className="text-gray-800 font-medium truncate">
+                          <span
+                            className={`font-medium truncate ${
+                              item.completed
+                                ? "text-gray-500 line-through"
+                                : "text-gray-800"
+                            }`}
+                          >
                             {item?.text}
                           </span>
                         </div>

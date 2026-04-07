@@ -35,13 +35,13 @@ router.patch("/:id", async (req, res) => {
       return res.status(404).json({ message: "Todo not found" });
     }
     if (
-      req.body.text !== undefined ||
-      req.body.text !== null ||
+      req.body.text !== undefined &&
+      req.body.text !== null &&
       req.body.text !== ""
     ) {
       updateTodo.text = req.body.text;
     }
-    if (req.body.completed !== undefined || req.body.completed !== null) {
+    if (req.body.completed !== undefined && req.body.completed !== null) {
       updateTodo.completed = req.body.completed;
     }
     await updateTodo.save();

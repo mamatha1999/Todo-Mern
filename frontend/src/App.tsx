@@ -19,6 +19,10 @@ const App = () => {
   });
   const [editingTodo, setEditingTodo] = useState<string | null>(null);
   const [editedText, setEditedText] = useState<string>("");
+  const [isAdding, setIsAdding] = useState(false);
+  const [savingTodoId, setSavingTodoId] = useState<string | null>(null);
+  const [deletingTodoId, setDeletingTodoId] = useState<string | null>(null);
+  const [togglingTodoId, setTogglingTodoId] = useState<string | null>(null);
 
   const startEditing = (todo: TodoItem) => {
     setEditingTodo(todo?._id ?? null);
@@ -40,7 +44,8 @@ const App = () => {
 
   const addTodo = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (form?.text?.trim() === "") return;
+    if (form?.text?.trim() === "" || isAdding) return;
+    setIsAdding(true);
     try {
       const res = await axios.post("/api/todos", form);
       setTodoItems((prev) => [...prev, res.data]);
@@ -50,11 +55,14 @@ const App = () => {
       });
     } catch (error) {
       console.log("Error adding todo:", error);
+    } finally {
+      setIsAdding(false);
     }
   };
 
   const saveEdit = async (id: string | undefined) => {
-    if (!id || editedText.trim() === "") return;
+    if (!id || editedText.trim() === "" || savingTodoId === id) return;
+    setSavingTodoId(id);
     try {
       const res = await axios.patch(`/api/todos/${id}`, {
         text: editedText.trim(),
@@ -65,21 +73,27 @@ const App = () => {
       setEditingTodo(null);
     } catch (error) {
       console.log("Error updating todo:", error);
+    } finally {
+      setSavingTodoId(null);
     }
   };
 
   const deleteTodo = async (id: string | undefined) => {
-    if (!id) return;
+    if (!id || deletingTodoId === id) return;
+    setDeletingTodoId(id);
     try {
       await axios.delete(`/api/todos/${id}`);
       setTodoItems((prev) => prev.filter((item) => item._id !== id));
     } catch (error) {
       console.log("Error deleting todo:", error);
+    } finally {
+      setDeletingTodoId(null);
     }
   };
 
   const toggleTodo = async (id: string | undefined) => {
-    if (!id) return;
+    if (!id || togglingTodoId === id) return;
+    setTogglingTodoId(id);
     try {
       const todo = todoItems.find((item) => item._id === id);
       if (!todo) return;
@@ -91,6 +105,8 @@ const App = () => {
       );
     } catch (error) {
       console.log("Error toggling todo:", error);
+    } finally {
+      setTogglingTodoId(null);
     }
   };
 
@@ -110,6 +126,7 @@ const App = () => {
           <input
             type="text"
             value={form?.text}
+            disabled={isAdding}
             onChange={(e) => {
               setForm((prev) => ({
                 ...prev,
@@ -122,10 +139,11 @@ const App = () => {
             required
           />
           <button
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md font-medium cursor-pointer"
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md font-medium cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             type="submit"
+            disabled={isAdding}
           >
-            Add Task
+            {isAdding ? "Adding..." : "Add Task"}
           </button>
         </form>
         <div className="mt-4">
@@ -140,21 +158,24 @@ const App = () => {
                       <input
                         type="text"
                         value={editedText}
+                        disabled={savingTodoId === item?._id}
                         onChange={(e) => setEditedText(e.target.value)}
                         className="flex-1 p-3 border rounded-lg border-gray-200 outline-none focus:ring-2 focus:ring-blue-300 text-gray-700 shadow-inner"
                       />
                       <div className="flex gap-x-2">
                         <button
                           type="button"
-                          className="px-4 py-2 text-white rounded-lg hover:bg-green-600 bg-green-500 cursor-pointer"
+                          className="px-4 py-2 text-white rounded-lg hover:bg-green-600 bg-green-500 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                           onClick={() => saveEdit(item?._id)}
+                          disabled={savingTodoId === item?._id}
                         >
-                          <MdOutlineDone />
+                          {savingTodoId === item?._id ? "..." : <MdOutlineDone />}
                         </button>
                         <button
                           type="button"
-                          className="px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-300 bg-gray-200 cursor-pointer"
+                          className="px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-300 bg-gray-200 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                           onClick={() => setEditingTodo(null)}
+                          disabled={savingTodoId === item?._id}
                         >
                           <IoClose />
                         </button>
@@ -166,10 +187,11 @@ const App = () => {
                         <div className="flex gap-x-4 overflow-hidden">
                           <button
                             type="button"
-                            className={`flex-shrink-0 h-6 w-6 border rounded-full flex items-center justify-center ${item?.completed ? "bg-green-500 border-green-500" : "border-gray-300 hover:border-blue-500 cursor-pointer"}`}
+                            className={`flex-shrink-0 h-6 w-6 border rounded-full flex items-center justify-center disabled:opacity-60 disabled:cursor-not-allowed ${item?.completed ? "bg-green-500 border-green-500" : "border-gray-300 hover:border-blue-500 cursor-pointer"}`}
                             onClick={() => toggleTodo(item?._id)}
+                            disabled={togglingTodoId === item?._id}
                           >
-                            {item?.completed && <MdOutlineDone />}
+                            {togglingTodoId === item?._id ? "..." : item?.completed && <MdOutlineDone />}
                           </button>
                           <span className="text-gray-800 font-medium truncate">
                             {item?.text}
@@ -178,17 +200,19 @@ const App = () => {
                         <div className="flex gap-x-2">
                           <button
                             type="button"
-                            className="p-2 text-blue-500 hover:text-blue-700 rounded-lg hover:bg-blue-50 duration-200"
+                            className="p-2 text-blue-500 hover:text-blue-700 rounded-lg hover:bg-blue-50 duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
                             onClick={() => startEditing(item)}
+                            disabled={deletingTodoId === item?._id}
                           >
                             <MdModeEditOutline />
                           </button>
                           <button
                             type="button"
-                            className="p-2 text-red-500 hover:text-red-700 rounded-lg hover:bg-red-50 duration-200"
+                            className="p-2 text-red-500 hover:text-red-700 rounded-lg hover:bg-red-50 duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
                             onClick={() => deleteTodo(item?._id)}
+                            disabled={deletingTodoId === item?._id}
                           >
-                            <FaTrash />
+                            {deletingTodoId === item?._id ? "..." : <FaTrash />}
                           </button>
                         </div>
                       </div>
